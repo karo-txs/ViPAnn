@@ -58,4 +58,4 @@ Each CSV file contains the following columns:
 
 #### Author
 
-Karolayne Silva [karo-txs](https://github.com/karo-txs)
+Karolayne Teixeira [karo-txs](https://github.com/karo-txs)
