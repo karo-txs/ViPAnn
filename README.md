@@ -6,7 +6,6 @@ This Python-based tool processes video files to extract and annotate body and ha
 ```bash
     Python 3.x
     OpenCV
-    Matplotlib
     Pandas
     Tqdm
     Click
@@ -31,7 +30,7 @@ pip install -r requirements.txt
 To process videos, run the following command:
 
 ```bash
-python main.py --dataset_name=<Dataset_Name> --folder_path=<Folder_Path> --output_folder=<Output_Folder> --landmarks=<Landmarks> --label_csv=<Label_CSV_Path> --save_sample_rate=<Save_Sample_Rate>
+python src/main.py --label_csv=<Label_CSV_Path> --dataset_name=<Dataset_Name> --folder_path=<Folder_Path> --output_folder=<Output_Folder> --landmarks=<Landmarks>  --save_sample_rate=<Save_Sample_Rate> --workers=<Workers> --max_num_samples=<Max_sampler>
 ```
 - Dataset_Name: The dataset name.
 - Folder_Path: Directory containing videos to be processed.
@@ -39,6 +38,8 @@ python main.py --dataset_name=<Dataset_Name> --folder_path=<Folder_Path> --outpu
 - Landmarks: List of landmarks to process (hand, body).
 - Label_CSV_Path: Path to CSV file containing labels for videos (optional).
 - Save_Sample_Rate: Rate at which sample frames will be saved as .png. Default is 100.
+- Workers: Number of workers.
+- Max_sampler: Maximum number of videos to process.
 
 ### Output
 
