@@ -1,6 +1,6 @@
 # ViPAnn - Video Landmark Processing Tool
 ### Description
-This Python-based tool processes video files to extract and annotate body and hand landmarks. The output is saved as CSV files, each containing landmark coordinates and labels for individual videos.
+This Python-based tool processes video files to extract and annotate body and hand landmarks. The output is saved as pkl files, each containing landmark coordinates and labels for individual videos.
 
 ### Requirements
 ```bash
@@ -58,4 +58,4 @@ Each CSV file contains the following columns:
 
 #### Author
 
-Karolayne Silva [karo-txs](https://github.com/karo-txs)
+Karolayne Teixeira [karo-txs](https://github.com/karo-txs)
