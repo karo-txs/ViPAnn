@@ -27,12 +27,22 @@ def add_label(frame_data, label_df):
 
 
 def create_dataframe_columns():
-    df_columns = ["video_name", "frame_count", "label"]
+    df_columns = [
+        "video_name",
+        "frame_count",
+        "label",
+        "video_size_height",
+        "video_size_width",
+        "video_fps",
+    ]
     dynamic_columns = [
-        f"{name}_{coord}" for name in HAND_MAPPER.values() for coord in ["x", "y"]
+        f"{name}_{'left' if direction == 0 else 'right'}_{coord}"
+        for name in HAND_MAPPER.values()
+        for direction in [0, 1]
+        for coord in ["x", "y"]
     ]
     dynamic_columns += [
-        f"{name}_{coord}" for name in BODY_MAPPER.values() for coord in ["x", "y"]
+        f"{name}_{coord}" for name in BODY_MAPPER.values() for coord in ["x", "y", "z"]
     ]
     df_columns.extend(dynamic_columns)
     return dynamic_columns, df_columns
@@ -46,12 +56,22 @@ def process_video(
 ):
     video_name = os.path.basename(video_path)
     cap = cv2.VideoCapture(video_path)
+    video_fps = cap.get(cv2.CAP_PROP_FPS)
+    video_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     dynamic_columns, df_columns = create_dataframe_columns()
 
-    frame_data = {"video_name": video_name, "frame_count": total_frames, "label": 0}
+    frame_data = {
+        "video_name": video_name,
+        "frame_count": total_frames,
+        "label": 0,
+        "video_size_height": video_height,
+        "video_size_width": video_width,
+        "video_fps": video_fps,
+    }
     for col in dynamic_columns:
         frame_data[col] = []
 
@@ -67,9 +87,24 @@ def process_video(
         hand_landmarks = detect_hand_landmarks(frame) if "hand" in landmarks else {}
         body_landmarks = detect_body_landmarks(frame) if "body" in landmarks else {}
 
+        for hand, marks in hand_landmarks.items():
+            for col_name, col_value in marks.items():
+                coord = col_name.split("_")[-1] 
+                landmark_name = "_".join(col_name.split("_")[:-1])
+
+                full_col_name = f"{landmark_name}_{hand}_{coord}"
+
+                if full_col_name in frame_data:
+                    frame_data[full_col_name].extend([col_value])
+
+            if not marks:
+                for col_name in HAND_MAPPER.values():
+                    for coord in ["x", "y"]:
+                        full_col_name = f"{col_name}_{hand}_{coord}"
+                        if full_col_name in frame_data:
+                            frame_data[full_col_name].extend([0])
+
         for col in dynamic_columns:
-            if col in hand_landmarks:
-                frame_data[col].extend([hand_landmarks[col]])
             if col in body_landmarks:
                 frame_data[col].extend([body_landmarks[col]])
 

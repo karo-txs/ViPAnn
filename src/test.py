@@ -6,6 +6,7 @@ class TestDatasetIntegrity(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.df = pd.read_pickle('annotations/final_dataset.pkl')
+        print(cls.df.head())
         
     def test_unique_labels(self):
         unique_labels = self.df['label'].nunique() if 'label' in self.df.columns else 'Column not found'
@@ -26,7 +27,7 @@ class TestDatasetIntegrity(unittest.TestCase):
             return cell
 
         selected_cols = self.df.columns[3:]
-        df_means = self.df[selected_cols].applymap(calculate_list_mean)
+        df_means = self.df[selected_cols].map(calculate_list_mean)
         overall_means = df_means.mean()
         print(overall_means)
 
