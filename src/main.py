@@ -1,8 +1,8 @@
 from concurrent.futures import ProcessPoolExecutor
+from mediapipe.mediapipe_utils import *
 from datetime import datetime as dt
 from multiprocessing import Manager
 from threading import Thread
-from mediapipe_utils import *
 from tqdm import tqdm
 import pandas as pd
 import click

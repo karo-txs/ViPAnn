@@ -1,6 +1,6 @@
 # ViPAnn - Video Landmark Processing Tool
 ### Description
-This Python-based tool processes video files to extract and annotate body and hand landmarks. The output is saved as pkl files, each containing landmark coordinates and labels for individual videos.
+This Python-based tool processes video files to extract and annotate body and hand landmarks. The output is saved as pkl files, each containing landmark coordinates and labels for individual videos. Additionally, the tool offers normalization utilities to adjust and clean your datasets.
 
 ### Requirements
 ```bash
@@ -27,26 +27,50 @@ pip install -r requirements.txt
 ```
 
 ### Usage
+#### Video Processing
 To process videos, run the following command:
 
 ```bash
-python src/main.py --label_csv=<Label_CSV_Path> --dataset_name=<Dataset_Name> --folder_path=<Folder_Path> --output_folder=<Output_Folder> --landmarks=<Landmarks>  --save_sample_rate=<Save_Sample_Rate> --workers=<Workers> --max_num_samples=<Max_sampler>
+python src/main.py \
+    --dataset_name=<Dataset_Name> \
+    --folder_path=<Folder_Path> \
+    --output_folder=<Output_Folder> \
+    --landmarks=<Landmarks> \
+    --label_csv=<Label_CSV_Path> \
+    --workers=<Workers> \
+    --max_num_samples=<Max_Num_Samples> \
+    --save_step=<Save_Step>
 ```
+
 - Dataset_Name: The dataset name.
 - Folder_Path: Directory containing videos to be processed.
 - Output_Folder: Directory where annotated CSVs will be saved.
 - Landmarks: List of landmarks to process (hand, body).
 - Label_CSV_Path: Path to CSV file containing labels for videos (optional).
-- Save_Sample_Rate: Rate at which sample frames will be saved as .png. Default is 100.
 - Workers: Number of workers.
-- Max_sampler: Maximum number of videos to process.
+- Max_Num_Samples: Maximum number of videos to process.
+- Save_Step: Step to partial save.
+
+#### Data Normalization
+To normalize your dataset (e.g., fill empty lists, update labels), run the following command:
+
+```bash
+python src/utils/normalization.py \
+    --pkl_path=<PKL_Path> \
+    --csv_path=<CSV_Path> \
+    --updated_pkl_path=<Updated_PKL_Path>
+```
+
+- PKL_Path: Path to the .pkl file that you wish to normalize.
+- CSV_Path: Path to the .csv file containing new labels.
+- Updated_PKL_Path: Path where the updated .pkl file will be saved.
 
 ### Output
 
-The output CSVs will be saved in the specified output folder, with filenames in the format:
+The output PKL files will be saved in the specified output folder, with filenames in the format:
 
 ```
-<dataset_name>_<current_datetime>.csv
+<dataset_name>_<current_datetime>.pkl
 ```
 
 Each CSV file contains the following columns:
