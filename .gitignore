@@ -7,6 +7,8 @@ __pypackages__/
 venv/
 venv.bak/
 
+*.csv
+*.parquet
+*.mp4
+
 videos/
-annotations/
-example_frames/

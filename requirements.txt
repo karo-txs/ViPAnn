@@ -2,4 +2,5 @@ mediapipe
 opencv-python
 click
 pandas
+pyarrow
 tqdm

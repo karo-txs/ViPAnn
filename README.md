@@ -1,84 +1,74 @@
 # ViPAnn - Video Landmark Processing Tool
 ### Description
-This Python-based tool processes video files to extract and annotate body and hand landmarks. The output is saved as pkl files, each containing landmark coordinates and labels for individual videos. Additionally, the tool offers normalization utilities to adjust and clean your datasets.
+This project provides a tool to extract landmarks from videos using the MediaPipe Holistic model and structures the data to be consistent with the Google Kaggle competition on ASL Signs found here.
 
 ### Requirements
-```bash
-    Python 3.x
-    OpenCV
-    Pandas
-    Tqdm
-    Click
-    MediaPipe (util functions)
 ```
-
-### Installation
-Clone this repository:
-
-```bash
-git clone https://github.com/karo-txs/ViPAnn.git
+Python 3.8 or above
+pandas
+OpenCV
+MediaPipe
+Click
 ```
-
-Navigate to the project directory and install the required packages:
+    
+You can install these requirements using pip:
 
 ```bash
-cd ViPAnn
 pip install -r requirements.txt
 ```
 
-### Usage
-#### Video Processing
-To process videos, run the following command:
+### Usage:
+#### Generate the dataset:
+To extract landmarks from your videos and generate the train data, run the following command:
 
 ```bash
-python src/main.py \
-    --dataset_name=<Dataset_Name> \
-    --folder_path=<Folder_Path> \
-    --output_folder=<Output_Folder> \
-    --landmarks=<Landmarks> \
-    --label_csv=<Label_CSV_Path> \
-    --workers=<Workers> \
-    --max_num_samples=<Max_Num_Samples> \
-    --save_step=<Save_Step>
+python vipann.py --base_file path_to_base.csv --video_path path_to_videos_folder --results_path path_to_save_results --workers number_of_workers
 ```
 
-- Dataset_Name: The dataset name.
-- Folder_Path: Directory containing videos to be processed.
-- Output_Folder: Directory where annotated CSVs will be saved.
-- Landmarks: List of landmarks to process (hand, body).
-- Label_CSV_Path: Path to CSV file containing labels for videos (optional).
-- Workers: Number of workers.
-- Max_Num_Samples: Maximum number of videos to process.
-- Save_Step: Step to partial save.
+Where:
+- path_to_base.csv is the path to your base CSV file containing video names and labels.
+- path_to_videos_folder is the directory path containing all the videos.
+- path_to_save_results (optional) is the directory where you want to save the results. Defaults to ./results.
+- number_of_workers (optional) is the number of parallel workers you want to use for processing. Defaults to 4.
 
-#### Data Normalization
-To normalize your dataset (e.g., fill empty lists, update labels), run the following command:
+##### Input Structure:
+- Videos: Videos should be stored in a directory. Each video corresponds to a sequence of ASL signs.
+- Support CSV:
+    - label: Name of the ASL sign shown in the video.
+    - video_name: Filename of the video.
 
+##### Structure of generated files:
+- Landmark Data (train_landmark_files/[participant_id]/[sequence_id].parquet):
+    - frame: The frame number in the raw video.
+    - row_id: A unique identifier for the row.
+    - type: The type of landmark. One of ['face', 'left_hand', 'pose', 'right_hand'].
+    - landmark_index: The landmark index number.
+    - x/y/z: The normalized spatial coordinates of the landmark.
+
+- Train Data (train.csv):
+    - path: The path to the landmark file.
+    - participant_id: A unique identifier for the data contributor.
+    - sequence_id: A unique identifier for the landmark sequence.
+    - sign: The numeric label for the landmark sequence.
+
+- Sign Mapping (sign_mapping.csv):
+    - sign: The original sign name.
+    - number: The corresponding numeric label.
+
+#### Test the generated dataset:
+a. Using pytest:
 ```bash
-python src/utils/normalization.py \
-    --pkl_path=<PKL_Path> \
-    --csv_path=<CSV_Path> \
-    --updated_pkl_path=<Updated_PKL_Path>
+pytest src/test.py
+```
+b. Using the command line:
+```bash
+python src/test.py --result-path results_test --base-file-path vlibrasil_bilingual_v2.csv
 ```
 
-- PKL_Path: Path to the .pkl file that you wish to normalize.
-- CSV_Path: Path to the .csv file containing new labels.
-- Updated_PKL_Path: Path where the updated .pkl file will be saved.
-
-### Output
-
-The output PKL files will be saved in the specified output folder, with filenames in the format:
-
-```
-<dataset_name>_<current_datetime>.pkl
-```
-
-Each CSV file contains the following columns:
-
-- video_name: The name of the video file.
-- frame_count: The total number of frames in the video.
-- label: The label for the video (if labels are provided).
-- Dynamic_Columns: These columns store the x and y coordinates for each landmark throughout the video.
+#### Notes:
+- The data structure is designed to match the [Google Kaggle competition on ASL Signs](https://www.kaggle.com/competitions/asl-signs/data).
+- Ensure the videos are properly lit to maximize the accuracy of landmark detection.
+- The MediaPipe model is not fully trained to predict depth, so the Z-values in the landmark data may not be completely accurate.
 
 #### Author
 
