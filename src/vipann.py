@@ -43,7 +43,6 @@ def process_video(video_path, participant_id, sequence_id, results_path):
     pd.DataFrame(frames_data).to_parquet(output_path)
     return output_path
 
-
 @click.command()
 @click.option(
     "--base_file", help="The base CSV file containing video names and labels."
@@ -53,7 +52,8 @@ def process_video(video_path, participant_id, sequence_id, results_path):
     "--results_path", default="./results", help="Path where the results will be saved."
 )
 @click.option("--workers", default=4, help="Number of workers for parallel processing.")
-def main(base_file, video_path, results_path, workers):
+@click.option("--class_map", default=None, help="Path to the class map file.")
+def main(base_file, video_path, results_path, workers, class_map):
     """Extract landmarks from videos and generate train.csv"""
     base_df = pd.read_csv(base_file)
     os.makedirs(os.path.dirname(results_path), exist_ok=True)
@@ -68,9 +68,25 @@ def main(base_file, video_path, results_path, workers):
 
     labels = [labels[i] for i in existing_video_indices]
 
-    # Convert labels to numeric and save the mapping
-    unique_labels = sorted(list(set(labels)))
-    label_to_num = {label: i for i, label in enumerate(unique_labels)}
+    if class_map:
+        print("Load custom class mapping if provided")
+        class_map_df = pd.read_csv(class_map, sep='\t', header=None, names=['number', 'sign'])
+        label_to_num = dict(zip(class_map_df['sign'], class_map_df['number']))
+    else:
+        print("Convert labels to numeric and save the mapping")
+        unique_labels = sorted(list(set(labels)))
+        label_to_num = {label: i for i, label in enumerate(unique_labels)}
+        pd.DataFrame(list(label_to_num.items()), columns=["sign", "number"]).to_csv(
+            os.path.join(results_path, "sign_mapping.csv"), index=False
+        )
+        
+    # Create mappings for any labels not in label_to_num
+    missing_labels = set(labels) - set(label_to_num.keys())
+    next_index = max(label_to_num.values()) + 1 if label_to_num else 0
+    for lbl in missing_labels:
+        label_to_num[lbl] = next_index
+        next_index += 1
+
     num_labels = [label_to_num[label] for label in labels]
     pd.DataFrame(list(label_to_num.items()), columns=["sign", "number"]).to_csv(
         os.path.join(results_path, "sign_mapping.csv"), index=False

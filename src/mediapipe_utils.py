@@ -30,7 +30,12 @@ def hand_landmarks_from_frame(image, frame_num):
 
         if results.multi_hand_landmarks:
             for hand_index, hand_landmark in enumerate(results.multi_hand_landmarks):
-                landmark_type = "left_hand" if hand_index == 0 else "right_hand"
+                # Determine hand type using multi_handedness
+                if results.multi_handedness[hand_index].classification[0].label == "Left":
+                    landmark_type = "left_hand"
+                else:
+                    landmark_type = "right_hand"
+
                 for index, landmark in enumerate(hand_landmark.landmark):
                     frames_data.append(
                         validate_landmark(
