@@ -1,8 +1,4 @@
-from mediapipe_utils import (
-    face_landmarks_from_frame,
-    hand_landmarks_from_frame,
-    pose_landmarks_from_frame,
-)
+from mediapipe_utils import holistic_landmarks_from_frame
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 import pandas as pd
@@ -29,9 +25,7 @@ def process_video(video_path, participant_id, sequence_id, results_path):
         if not ret:
             break
 
-        frames_data.extend(hand_landmarks_from_frame(frame, frame_num))
-        frames_data.extend(pose_landmarks_from_frame(frame, frame_num))
-        frames_data.extend(face_landmarks_from_frame(frame, frame_num))
+        frames_data.extend(holistic_landmarks_from_frame(frame, frame_num))
 
         frame_num += 1
 
@@ -51,7 +45,7 @@ def process_video(video_path, participant_id, sequence_id, results_path):
 @click.option(
     "--results_path", default="./results", help="Path where the results will be saved."
 )
-@click.option("--workers", default=4, help="Number of workers for parallel processing.")
+@click.option("--workers", default=1, help="Number of workers for parallel processing.")
 @click.option("--class_map", default=None, help="Path to the class map file.")
 def main(base_file, video_path, results_path, workers, class_map):
     """Extract landmarks from videos and generate train.csv"""
