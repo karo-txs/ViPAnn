@@ -3,18 +3,36 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 import pandas as pd
 import click
+import errno
 import glob
 import cv2
 import os
 
 
-def process_video(video_path, participant_id, sequence_id, results_path):
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def find_file(search_path, target_file):
+    for dirpath, dirnames, filenames in os.walk(search_path):
+        if target_file in filenames:
+            return os.path.join(dirpath, target_file)
+    return None
+
+
+def process_video(video_path, results_path):
     """Extract landmarks from a video and save to parquet format."""
 
     if not os.path.exists(video_path):
         with open(os.path.join(results_path, "missing.txt"), "a") as f:
             f.write(f"{video_path}\n")
         return None
+
+    name = video_path.split("/")[-1].replace(".mp4", "")
 
     cap = cv2.VideoCapture(video_path)
     frames_data = []
@@ -30,12 +48,11 @@ def process_video(video_path, participant_id, sequence_id, results_path):
         frame_num += 1
 
     cap.release()
-    output_path = os.path.join(
-        results_path, f"landmark_files/{participant_id}/{sequence_id}.parquet"
-    )
+    output_path = os.path.join(results_path, f"landmark_files/{name}.parquet")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     pd.DataFrame(frames_data).to_parquet(output_path)
     return output_path
+
 
 @click.command()
 @click.option(
@@ -50,41 +67,14 @@ def process_video(video_path, participant_id, sequence_id, results_path):
 def main(base_file, video_path, results_path, workers, class_map):
     """Extract landmarks from videos and generate train.csv"""
     base_df = pd.read_csv(base_file)
-    os.makedirs(os.path.dirname(results_path), exist_ok=True)
+    mkdir(results_path)
 
-    labels = base_df["label"].tolist()
-
-    video_paths = [os.path.join(video_path, v) for v in base_df["video_name"].tolist()]
-    existing_video_indices = [
-        i for i, path in enumerate(video_paths) if os.path.exists(path)
-    ]
+    labels = base_df["sign"].tolist()
+    video_paths = [find_file(video_path, v) for v in base_df["path"].tolist()]
+    existing_video_indices = [idx for idx, v in enumerate(video_paths) if v]
     video_paths = [video_paths[i] for i in existing_video_indices]
 
     labels = [labels[i] for i in existing_video_indices]
-
-    if class_map:
-        print("Load custom class mapping if provided")
-        class_map_df = pd.read_csv(class_map, sep='\t', header=None, names=['number', 'sign'])
-        label_to_num = dict(zip(class_map_df['sign'], class_map_df['number']))
-    else:
-        print("Convert labels to numeric and save the mapping")
-        unique_labels = sorted(list(set(labels)))
-        label_to_num = {label: i for i, label in enumerate(unique_labels)}
-        pd.DataFrame(list(label_to_num.items()), columns=["sign", "number"]).to_csv(
-            os.path.join(results_path, "sign_mapping.csv"), index=False
-        )
-        
-    # Create mappings for any labels not in label_to_num
-    missing_labels = set(labels) - set(label_to_num.keys())
-    next_index = max(label_to_num.values()) + 1 if label_to_num else 0
-    for lbl in missing_labels:
-        label_to_num[lbl] = next_index
-        next_index += 1
-
-    num_labels = [label_to_num[label] for label in labels]
-    pd.DataFrame(list(label_to_num.items()), columns=["sign", "number"]).to_csv(
-        os.path.join(results_path, "sign_mapping.csv"), index=False
-    )
 
     if "participant_id" in base_df.columns:
         participant_ids = [
@@ -93,13 +83,11 @@ def main(base_file, video_path, results_path, workers, class_map):
     else:
         participant_ids = [0] * len(video_paths)
 
-    sequence_ids = list(range(1001, 1001 + len(video_paths)))
+    sequence_ids = list(range(0, len(video_paths)))
 
     video_data = list(
         zip(
             video_paths,
-            participant_ids,
-            sequence_ids,
             [results_path] * len(video_paths),
         )
     )
@@ -108,19 +96,16 @@ def main(base_file, video_path, results_path, workers, class_map):
             tqdm(executor.map(process_video, *zip(*video_data)), total=len(video_data))
         )
 
-    output_paths = glob.glob(
-        f"{results_path}/landmark_files/*/*.parquet", recursive=True
-    )
-
-    train_df = pd.DataFrame(
+    output_paths = glob.glob(f"{results_path}/landmark_files/*.parquet", recursive=True)
+    df = pd.DataFrame(
         {
             "path": [output.split("/")[-1] for output in output_paths],
             "participant_id": participant_ids,
             "sequence_id": sequence_ids,
-            "sign": num_labels,
+            "sign": labels,
         }
     )
-    train_df.to_csv(os.path.join(results_path, "landmarks.csv"), index=False)
+    df.to_csv(os.path.join(results_path, "landmarks.csv"), index=False)
 
 
 if __name__ == "__main__":
