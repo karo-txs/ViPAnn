@@ -22,7 +22,7 @@ pip install -r requirements.txt
 To extract landmarks from your videos and generate the train data, run the following command:
 
 ```bash
-python vipann.py --base_file path_to_base.csv --video_path path_to_videos_folder --results_path path_to_save_results --workers number_of_workers
+python src/vipann.py --base_file C:/Users/karol/Downloads/ufv/ufv.csv --video_path C:/Users/karol/Downloads/ufv/ --results_path ufv --workers 1
 ```
 
 Where:
@@ -34,8 +34,8 @@ Where:
 ##### Input Structure:
 - Videos: Videos should be stored in a directory. Each video corresponds to a sequence of ASL signs.
 - Support CSV:
-    - label: Name of the ASL sign shown in the video.
-    - video_name: Filename of the video.
+    - sign: Name of the sign shown in the video.
+    - path: Filename of the video.
 
 ##### Structure of generated files:
 - Landmark Data (train_landmark_files/[participant_id]/[sequence_id].parquet):
@@ -45,15 +45,11 @@ Where:
     - landmark_index: The landmark index number.
     - x/y/z: The normalized spatial coordinates of the landmark.
 
-- Train Data (train.csv):
+- Landmarks Data (landmarks.csv):
     - path: The path to the landmark file.
     - participant_id: A unique identifier for the data contributor.
     - sequence_id: A unique identifier for the landmark sequence.
-    - sign: The numeric label for the landmark sequence.
-
-- Sign Mapping (sign_mapping.csv):
-    - sign: The original sign name.
-    - number: The corresponding numeric label.
+    - sign: The label for the landmark sequence.
 
 #### Test the generated dataset:
 a. Using pytest:

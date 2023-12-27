@@ -32,6 +32,7 @@ def process_video(video_path, results_path):
             f.write(f"{video_path}\n")
         return None
 
+    video_path = video_path.replace("\\", "/")
     name = video_path.split("/")[-1].replace(".mp4", "")
 
     cap = cv2.VideoCapture(video_path)
@@ -73,7 +74,6 @@ def main(base_file, video_path, results_path, workers, class_map):
     video_paths = [find_file(video_path, v) for v in base_df["path"].tolist()]
     existing_video_indices = [idx for idx, v in enumerate(video_paths) if v]
     video_paths = [video_paths[i] for i in existing_video_indices]
-
     labels = [labels[i] for i in existing_video_indices]
 
     if "participant_id" in base_df.columns:
@@ -99,7 +99,7 @@ def main(base_file, video_path, results_path, workers, class_map):
     output_paths = glob.glob(f"{results_path}/landmark_files/*.parquet", recursive=True)
     df = pd.DataFrame(
         {
-            "path": [output.split("/")[-1] for output in output_paths],
+            "path": [output.replace("\\", "/").split("/")[-1] for output in output_paths],
             "participant_id": participant_ids,
             "sequence_id": sequence_ids,
             "sign": labels,
